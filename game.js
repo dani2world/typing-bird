@@ -1,5 +1,18 @@
 // 게임 루프 / 스폰 / 입력매칭 / 점수 / 화면전환 — 전체 조립
 (function () {
+  // 모바일에서 가상 키보드가 뜨면 실제 보이는 화면 높이가 줄어드는데,
+  // 이 값을 --app-height로 반영해서 입력창이 키보드 위에 보이도록 함
+  function updateAppHeight() {
+    var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', h + 'px');
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateAppHeight);
+    window.visualViewport.addEventListener('scroll', updateAppHeight);
+  }
+  window.addEventListener('resize', updateAppHeight);
+  updateAppHeight();
+
   var state = {
     phase: 'start',      // 'start' | 'playing' | 'gameover'
     mode: 'ko',

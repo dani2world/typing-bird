@@ -28,6 +28,7 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: var(--app-height, 100vh); /* 모바일 키보드가 뜬 만큼 실제 보이는 영역에 맞춤 */
 }
 
 .screen {
