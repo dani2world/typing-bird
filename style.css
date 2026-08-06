@@ -537,11 +537,25 @@ html, body {
 /* 반응형 */
 @media (max-width: 640px) {
   .title { font-size: 1.8rem; }
+  .subtitle { font-size: 0.95rem; }
   .start-card { padding: 16px 18px 22px; }
   .stage-btn { width: 58px; font-size: 0.65rem; }
   .falling-word { font-size: 1.1rem; }
+  .topbar { gap: 10px; padding: 8px 12px; }
+  .topbar-item { font-size: 0.9rem; white-space: nowrap; }
+  .stage-badge { padding: 3px 8px; }
+  .icon-btn { font-size: 1rem; padding: 2px 8px; }
 }
 
 @media (max-width: 480px) {
-  .title { white-space: normal; font-size: 1.44rem; }
+  .title { white-space: normal; font-size: 1.3rem; }
+  .subtitle { font-size: 0.8rem; }
+  .topbar { gap: 6px; padding: 6px 8px; }
+  .topbar-item { font-size: 0.75rem; }
+  .stage-badge { padding: 2px 6px; border-radius: 10px; }
+  .icon-btn { font-size: 0.85rem; padding: 2px 6px; }
+}
+
+@media (max-width: 340px) {
+  .title { font-size: 1.15rem; }
 }
