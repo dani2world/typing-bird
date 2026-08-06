@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>새둥지 타자 대작전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ 시작 화면 ============ -->
+  <section id="screen-start" class="screen">
+    <div class="sky-bg">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+    </div>
+    <div class="start-card">
+      <h1 class="title">🐣 새둥지 타자 대작전 🐣</h1>
+      <p class="subtitle">"알을 깨고 멋진 새로 성장하자!"</p>
+
+      <!-- 둥둥 떠있는 알 마스코트는 잠시 숨김 처리 (필요하면 아래 주석을 해제) -->
+      <!-- <div id="mascot-start" class="mascot-slot"></div> -->
+
+      <!-- 당분간 한글 모드만 사용하기로 하여 언어 선택 UI 숨김 처리 (필요하면 아래 주석을 해제) -->
+      <!--
+      <div class="option-group">
+        <div class="option-label">언어 선택</div>
+        <div class="btn-row" id="mode-select">
+          <button class="big-btn mode-btn selected" data-mode="ko">🇰🇷 한글 모드</button>
+          <button class="big-btn mode-btn" data-mode="en">🇺🇸 영어 모드</button>
+        </div>
+      </div>
+      -->
+
+      <div class="option-group">
+        <div class="option-label">시작 단계 (선택)</div>
+        <div class="btn-row stage-select" id="stage-select">
+          <button class="stage-btn selected" data-stage="1">1<br>🥚<br>알</button>
+          <button class="stage-btn" data-stage="2">2<br>🐤<br>삐약이</button>
+          <button class="stage-btn" data-stage="3">3<br>🐥<br>아기새</button>
+          <button class="stage-btn" data-stage="4">4<br>🐦<br>형님새</button>
+          <button class="stage-btn" data-stage="5">5<br>🦤<br>어미새</button>
+          <button class="stage-btn" data-stage="6">6<br>🦉<br>박사새</button>
+          <button class="stage-btn" data-stage="7">7<br>🤖<br>기계새</button>
+        </div>
+      </div>
+
+      <div class="best-score" id="best-score-display">최고 기록: 없음</div>
+
+      <button id="start-btn" class="start-btn">▶ 시작하기</button>
+    </div>
+  </section>
+
+  <!-- ============ 플레이 화면 ============ -->
+  <section id="screen-playing" class="screen hidden">
+    <div class="topbar">
+      <div class="topbar-item lives-display" id="lives-display">❤️❤️❤️</div>
+      <div class="topbar-item stage-badge" id="stage-badge">🥚 알</div>
+      <div class="topbar-item score-display" id="score-display">점수: 0</div>
+      <button id="pause-btn" class="icon-btn">⏸</button>
+    </div>
+
+    <div class="play-area" id="play-area">
+      <div class="sky-bg">
+        <div class="cloud c1"></div>
+        <div class="cloud c2"></div>
+      </div>
+      <!-- falling word divs are injected here by game.js -->
+      <div id="mascot-playing" class="mascot-slot mascot-slot-playing"></div>
+      <div class="nest" id="nest"></div>
+    </div>
+
+    <div class="typed-buffer-bar">
+      <span class="typed-buffer-label">입력:</span>
+      <div id="typed-buffer" class="typed-buffer"><span id="typed-buffer-text"></span><span class="typed-cursor"></span></div>
+    </div>
+  </section>
+
+  <!-- ============ 일시정지 오버레이 ============ -->
+  <section id="screen-paused" class="screen overlay hidden">
+    <div class="pause-card">
+      <h2>⏸ 잠깐 쉬어가요</h2>
+      <button id="resume-btn" class="big-btn">▶ 계속하기</button>
+      <button id="quit-btn" class="big-btn secondary">🏠 처음으로</button>
+    </div>
+  </section>
+
+  <!-- ============ 결과 화면 ============ -->
+  <section id="screen-gameover" class="screen hidden">
+    <div class="sky-bg dim">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+    </div>
+    <div class="gameover-card">
+      <h2 id="gameover-title">게임 종료!</h2>
+      <div id="mascot-gameover" class="mascot-slot"></div>
+      <div id="new-record-badge" class="new-record-badge hidden">🎉 신기록! 🎉</div>
+      <div class="result-line">최종 점수: <span id="final-score">0</span></div>
+      <div class="result-line">도달 단계: <span id="final-stage">알</span></div>
+      <div class="btn-row">
+        <button id="retry-btn" class="big-btn">🔄 다시하기</button>
+        <button id="back-btn" class="big-btn secondary">🏠 처음으로</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="stages.js"></script>
+<script src="words-ko.js"></script>
+<script src="words-en.js"></script>
+<script src="audio.js"></script>
+<script src="input.js"></script>
+<script src="mascot.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
