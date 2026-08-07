@@ -91,8 +91,15 @@ html, body {
 /* ---------- 시작 화면 ---------- */
 #screen-start {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.start-card > .btn-row {
+  margin-top: 18px;
 }
 
 .start-card {
@@ -108,6 +115,10 @@ html, body {
   max-height: 92vh;
   overflow-y: auto;
   text-align: center;
+}
+
+#screen-login .start-card {
+  width: 80%;
 }
 
 .title {
@@ -199,6 +210,98 @@ html, body {
   font-size: 0.95rem;
   color: #8a7a6d;
 }
+
+.hidden { display: none; }
+
+.text-input {
+  display: block;
+  width: 50%;
+  margin: 0 auto 10px;
+  font-family: 'Gaegu', sans-serif;
+  font-size: 1.1rem;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 3px solid var(--orange-light);
+  background: #fff;
+  color: var(--text-dark);
+  text-align: center;
+  box-sizing: border-box;
+}
+.text-input:focus { outline: none; border-color: var(--orange); }
+
+.login-error {
+  color: #e05050;
+  font-size: 0.9rem;
+  margin: -4px 0 10px;
+  font-weight: bold;
+}
+
+#login-btn {
+  margin-top: 18px;
+}
+
+.link-btn {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: #8a7a6d;
+  font-family: 'Gaegu', sans-serif;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+.link-btn:hover { color: var(--orange); }
+
+#login-form .link-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.notice-board {
+  position: relative;
+  z-index: 1;
+  font-size: 0.85rem;
+  color: #8a6a2c;
+  margin: 16px 0 0;
+  max-width: 90%;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.welcome-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--orange);
+  margin-bottom: 12px;
+}
+
+.login-status {
+  font-size: 0.9rem;
+  color: var(--orange);
+  font-weight: bold;
+  margin: -6px 0 6px;
+}
+
+.leaderboard-list {
+  text-align: left;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.leaderboard-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 2px dashed var(--orange-light);
+  font-size: 1rem;
+}
+.leaderboard-list li:first-child { font-weight: bold; color: #e0a020; }
+.leaderboard-rank { font-weight: bold; margin-right: 8px; color: var(--orange); }
+.leaderboard-empty { color: #8a7a6d; font-size: 0.9rem; text-align: center; }
 
 .start-btn {
   font-family: 'Jua', sans-serif;

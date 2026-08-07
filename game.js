@@ -29,10 +29,17 @@
     nextSpawnInterval: 3000,
     paused: false,
     transitioning: false,
-    lastTs: 0
+    lastTs: 0,
+    loggedIn: false,
+    nickname: null,
+    pin: null,
+    authDecided: false,   // 이번 세션에서 로그인/게스트 여부를 이미 정했는지
+    loginIntent: 'start'  // 'start' | 'browse' — 로그인 화면을 연 이유
   };
 
   var wordQueues = {};
+  var selectedMode = 'ko';
+  var selectedStage = 1;
 
   function shuffle(arr) {
     for (var i = arr.length - 1; i > 0; i--) {
@@ -102,14 +109,151 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ score: score, stage: stage })); } catch (e) {}
   }
   function updateBestScoreDisplay() {
-    var best = loadBest();
     var el = document.getElementById('best-score-display');
-    if (best.score > 0) {
-      var stage = window.getStage(best.stage);
-      el.textContent = '최고 기록: ' + best.score + '점 (' + stage.emoji + ' ' + stage.nameKo + ' 단계)';
-    } else {
-      el.textContent = '최고 기록: 없음';
+    el.textContent = '최고기록 : 불러오는 중...';
+    window.Backend.getLeaderboard().then(function (res) {
+      if (res.ok && res.leaderboard && res.leaderboard.length > 0) {
+        var top = res.leaderboard[0];
+        var stage = window.getStage(top.stage);
+        el.textContent = '최고기록 : ' + top.nickname + ' ' + top.score + '점' + (stage ? ' ' + stage.emoji : '');
+      } else {
+        el.textContent = '최고기록 : 아직 없어요';
+      }
+    });
+  }
+
+  // ---------- 로그인 / 세션 ----------
+  var SESSION_KEY = 'birdTypingSession';
+  function loadSession() {
+    try {
+      var raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (obj && obj.nickname && obj.pin) return obj;
+    } catch (e) {}
+    return null;
+  }
+  function saveSession(nickname, pin) {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify({ nickname: nickname, pin: pin })); } catch (e) {}
+  }
+  function clearSession() {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  }
+
+  function loginErrorMessage(code) {
+    switch (code) {
+      case 'no_such_user': return '등록되지 않은 닉네임이에요.';
+      case 'wrong_pin': return 'PIN이 올바르지 않아요.';
+      case 'missing_fields': return '닉네임과 PIN을 모두 입력해주세요.';
+      case 'backend_not_configured': return '아직 서버 연결 전이에요. 잠시만 기다려주세요.';
+      default: return '로그인에 실패했어요. 잠시 후 다시 시도해주세요.';
     }
+  }
+  function showLoginError(msg) {
+    var el = document.getElementById('login-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+  function hideLoginError() {
+    document.getElementById('login-error').classList.add('hidden');
+  }
+  function showLoginForm() {
+    document.getElementById('login-welcome-back').classList.add('hidden');
+    document.getElementById('login-form').classList.remove('hidden');
+  }
+
+  // 순위표와 동일한 방식(반투명 배경 위 팝업 카드)의 오버레이로 로그인 화면을 띄움
+  // intent: 'start' — "시작하기"를 눌러서 게임을 시작하려는 경우 (해결되면 바로 게임 시작)
+  //         'browse' — 홈 화면의 "로그인" 링크로 연 경우 (해결되면 홈 화면으로 복귀)
+  function openLoginScreen(intent) {
+    state.loginIntent = intent;
+    var guestBtn = document.getElementById('guest-btn');
+    guestBtn.textContent = intent === 'start' ? 'Guest로 플레이' : '취소하고 돌아가기';
+    document.getElementById('screen-login').classList.remove('hidden');
+    hideLoginError();
+    var session = loadSession();
+    if (session) {
+      document.getElementById('login-welcome-back').classList.remove('hidden');
+      document.getElementById('login-form').classList.add('hidden');
+      document.getElementById('welcome-back-text').textContent = session.nickname + '님, 환영합니다!';
+    } else {
+      showLoginForm();
+    }
+  }
+
+  function closeLoginScreen() {
+    document.getElementById('screen-login').classList.add('hidden');
+  }
+
+  function updateLoginStatusDisplay() {
+    var statusEl = document.getElementById('login-status');
+    var logoutBtn = document.getElementById('logout-btn'); // 현재 화면에서 숨김 처리됨(주석) — null일 수 있음
+    var loginLinkBtn = document.getElementById('login-link-btn');
+    if (state.loggedIn) {
+      statusEl.textContent = '👤 ' + state.nickname + '님으로 플레이 중';
+      statusEl.classList.remove('hidden');
+      if (logoutBtn) logoutBtn.classList.remove('hidden');
+      loginLinkBtn.classList.add('hidden');
+    } else {
+      statusEl.textContent = '';
+      statusEl.classList.add('hidden');
+      if (logoutBtn) logoutBtn.classList.add('hidden');
+      loginLinkBtn.classList.remove('hidden');
+    }
+  }
+
+  // 로그인 화면(로그인 성공 / 게스트 / 세션 이어하기)이 해결됐을 때 공통 처리
+  function resolveLogin(loggedIn, nickname, pin) {
+    state.authDecided = true;
+    if (loggedIn) {
+      state.loggedIn = true;
+      state.nickname = nickname;
+      state.pin = pin;
+    }
+    updateLoginStatusDisplay();
+    closeLoginScreen();
+    if (state.loginIntent === 'start') {
+      startGame(selectedMode, selectedStage);
+    } else {
+      updateBestScoreDisplay();
+    }
+  }
+
+  // ---------- 공지사항 ----------
+  function loadNotice() {
+    var board = document.getElementById('notice-board');
+    window.Backend.getNotice().then(function (res) {
+      if (res.ok && res.notice) {
+        board.textContent = '📢 ' + res.notice;
+        board.classList.remove('hidden');
+      } else {
+        board.classList.add('hidden');
+      }
+    });
+  }
+
+  // ---------- 순위표 ----------
+  function openLeaderboard() {
+    var listEl = document.getElementById('leaderboard-list');
+    listEl.innerHTML = '<li class="leaderboard-empty">불러오는 중...</li>';
+    document.getElementById('screen-leaderboard').classList.remove('hidden');
+    window.Backend.getLeaderboard().then(function (res) {
+      if (!res.ok) {
+        listEl.innerHTML = '<li class="leaderboard-empty">순위표를 불러올 수 없어요.</li>';
+        return;
+      }
+      if (!res.leaderboard || res.leaderboard.length === 0) {
+        listEl.innerHTML = '<li class="leaderboard-empty">아직 기록이 없어요.</li>';
+        return;
+      }
+      var medals = ['🥇', '🥈', '🥉'];
+      listEl.innerHTML = res.leaderboard.map(function (row, i) {
+        var rankLabel = medals[i] || (i + 1) + '.';
+        var stage = window.getStage(row.stage);
+        return '<li><span><span class="leaderboard-rank">' + rankLabel + '</span>' + escapeHtml(row.nickname) + '</span><span>' +
+          row.score + '점 (' + (stage ? stage.emoji : '') + ')</span></li>';
+      }).join('');
+    });
   }
 
   // ---------- 화면 표시 갱신 ----------
@@ -415,6 +559,7 @@
     window.Mascot.resetPose();
     window.Mascot.setStage(1);
     updateBestScoreDisplay();
+    updateLoginStatusDisplay();
   }
 
   function endGame() {
@@ -426,6 +571,9 @@
     var best = loadBest();
     var isNewRecord = state.score > best.score;
     saveBest(Math.max(state.score, best.score), Math.max(state.stageId, best.stage));
+    if (state.loggedIn) {
+      window.Backend.submitScore(state.nickname, state.pin, state.score, state.stageId);
+    }
 
     window.GameAudio.playGameOver();
     window.Mascot.mount(document.getElementById('mascot-gameover'));
@@ -453,9 +601,6 @@
 
   // ---------- 초기화 / UI 바인딩 ----------
   document.addEventListener('DOMContentLoaded', function () {
-    var selectedMode = 'ko';
-    var selectedStage = 1;
-
     document.querySelectorAll('.mode-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.querySelectorAll('.mode-btn').forEach(function (b) { b.classList.remove('selected'); });
@@ -474,7 +619,11 @@
     });
 
     document.getElementById('start-btn').addEventListener('click', function () {
-      startGame(selectedMode, selectedStage);
+      if (state.authDecided) {
+        startGame(selectedMode, selectedStage);
+      } else {
+        openLoginScreen('start');
+      }
     });
     document.getElementById('pause-btn').addEventListener('click', pauseGame);
     document.getElementById('resume-btn').addEventListener('click', resumeGame);
@@ -484,10 +633,72 @@
     });
     document.getElementById('back-btn').addEventListener('click', quitToStart);
 
+    document.getElementById('continue-session-btn').addEventListener('click', function () {
+      var session = loadSession();
+      if (!session) { showLoginForm(); return; }
+      window.GameAudio.playClick();
+      window.Backend.login(session.nickname, session.pin).then(function (res) {
+        if (res.ok) {
+          resolveLogin(true, session.nickname, session.pin);
+        } else {
+          clearSession();
+          showLoginForm();
+          showLoginError('세션이 만료됐어요. 다시 로그인해주세요.');
+        }
+      });
+    });
+    document.getElementById('switch-account-btn').addEventListener('click', function () {
+      clearSession();
+      showLoginForm();
+      hideLoginError();
+    });
+    document.getElementById('login-btn').addEventListener('click', function () {
+      var nickname = document.getElementById('nickname-input').value.trim();
+      var pin = document.getElementById('pin-input').value.trim();
+      hideLoginError();
+      if (!nickname || !pin) { showLoginError('닉네임과 PIN을 모두 입력해주세요.'); return; }
+      window.GameAudio.playClick();
+      window.Backend.login(nickname, pin).then(function (res) {
+        if (res.ok) {
+          saveSession(nickname, pin);
+          resolveLogin(true, nickname, pin);
+        } else {
+          showLoginError(loginErrorMessage(res.error));
+        }
+      });
+    });
+    document.getElementById('guest-btn').addEventListener('click', function () {
+      window.GameAudio.playClick();
+      resolveLogin(false);
+    });
+    document.getElementById('login-link-btn').addEventListener('click', function () {
+      window.GameAudio.playClick();
+      openLoginScreen('browse');
+    });
+    var logoutBtnEl = document.getElementById('logout-btn'); // 현재 화면에서 숨김 처리됨(주석) — null일 수 있음
+    if (logoutBtnEl) {
+      logoutBtnEl.addEventListener('click', function () {
+        clearSession();
+        state.loggedIn = false;
+        state.nickname = null;
+        state.pin = null;
+        updateLoginStatusDisplay();
+      });
+    }
+    document.getElementById('leaderboard-btn').addEventListener('click', function () {
+      window.GameAudio.playClick();
+      openLeaderboard();
+    });
+    document.getElementById('leaderboard-close-btn').addEventListener('click', function () {
+      document.getElementById('screen-leaderboard').classList.add('hidden');
+    });
+
     window.Mascot.init();
-    window.Mascot.mount(document.getElementById('mascot-start'));
     window.Mascot.setStage(1);
+    showScreen('start');
+    updateLoginStatusDisplay();
     updateBestScoreDisplay();
+    loadNotice();
 
     requestAnimationFrame(tick);
   });
